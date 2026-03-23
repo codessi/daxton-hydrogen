@@ -16,7 +16,9 @@ interface HeaderProps {
 }
 
 type Viewport = 'desktop' | 'mobile';
-const DEBUG_MENU_BORDERS = true;
+const DEBUG_BORDERS = false;
+const DEBUG_MENU_URLS = false;
+type HeaderMenuItem = NonNullable<HeaderProps['header']['menu']>['items'][number];
 
 export function Header({
   header,
@@ -29,40 +31,28 @@ export function Header({
     <>
       <div className="header-promo">Free shipping on all orders for members.</div>
       <header className={withDebugBorders('header', 'debug-red')}>
-        <NavLink className="header-logo" prefetch="intent" to="/" end>
-          <strong>{shop.name}</strong>
-        </NavLink>
+        <div className={withDebugBorders('header-left', 'debug-amber')}>
+          <NavLink className="header-logo" prefetch="intent" to="/" end>
+            {shop.brand?.logo?.image?.url ? (
+              <img
+                src={shop.brand.logo.image.url}
+                alt={shop.name}
+                height={40}
+                loading="eager"
+              />
+            ) : (
+              <strong>{shop.name}</strong>
+            )}
+          </NavLink>
+          <HeaderMenu
+            menu={menu}
+            viewport="desktop"
+            primaryDomainUrl={header.shop.primaryDomain.url}
+            publicStoreDomain={publicStoreDomain}
+          />
+        </div>
         <HeaderCtas isLoggedIn={isLoggedIn} cart={cart} />
       </header>
-      <div
-        className={withDebugBorders('header-category-bar', 'debug-amber')}
-      >
-        <div
-          className={withDebugBorders('header-category-links', 'debug-green')}
-        >
-          <NavLink prefetch="intent" to="/collections" end>
-            Men
-          </NavLink>
-          <NavLink prefetch="intent" to="/collections/all" end>
-            Women
-          </NavLink>
-          <NavLink prefetch="intent" to="/collections" end>
-            Headwear
-          </NavLink>
-          <NavLink prefetch="intent" to="/collections" end>
-            Apparel
-          </NavLink>
-          <NavLink prefetch="intent" to="/collections/all" end>
-            New Arrivals
-          </NavLink>
-        </div>
-      </div>
-      <HeaderMenu
-        menu={menu}
-        viewport="desktop"
-        primaryDomainUrl={header.shop.primaryDomain.url}
-        publicStoreDomain={publicStoreDomain}
-      />
     </>
   );
 }
@@ -102,28 +92,63 @@ export function HeaderMenu({
           
         </NavLink>
       )}
-      {(menu || FALLBACK_HEADER_MENU).items.map((item) => {
+      {(menu?.items ?? []).map((item) => {
         if (!item.url) return null;
 
-        // if the url is internal, we strip the domain
-        const url =
-          item.url.includes('myshopify.com') ||
-          item.url.includes(publicStoreDomain) ||
-          item.url.includes(primaryDomainUrl)
-            ? new URL(item.url).pathname
-            : item.url;
+        const url = getMenuItemUrl({
+          itemUrl: item.url,
+          publicStoreDomain,
+          primaryDomainUrl,
+        });
+
+        const sectionItems = getMenuItemChildren(item);
+        const hasMegaMenu = viewport === 'desktop' && sectionItems.length > 0;
+
         return (
-          <NavLink
-            className={withDebugBorders('header-menu-item', 'debug-blue')}
-            end
-            key={item.id}
-            onClick={close}
-            prefetch="intent"
-            style={activeLinkStyle}
-            to={url}
-          >
-            {item.title}
-          </NavLink>
+          <div className="header-menu-item-wrapper" key={item.id}>
+            <NavLink
+              className={withDebugBorders('header-menu-item', 'debug-blue')}
+              end
+              onClick={close}
+              prefetch="intent"
+              style={activeLinkStyle}
+              to={url}
+            >
+              {item.title}
+              {DEBUG_MENU_URLS && viewport === 'desktop' ? ` (${url})` : ''}
+            </NavLink>
+            {hasMegaMenu ? (
+              <div className="mega-menu-panel">
+                <div className="mega-menu-grid">
+                  {sectionItems.map((section) => (
+                    <section className="mega-menu-section" key={section.id}>
+                      <h4>{section.title}</h4>
+                      <ul>
+                        {(getMenuItemChildren(section).length
+                          ? getMenuItemChildren(section)
+                          : [section]
+                        ).map((link) => {
+                          if (!link.url) return null;
+                          const linkUrl = getMenuItemUrl({
+                            itemUrl: link.url,
+                            publicStoreDomain,
+                            primaryDomainUrl,
+                          });
+                          return (
+                            <li key={link.id}>
+                              <NavLink prefetch="intent" to={linkUrl}>
+                                {link.title}
+                              </NavLink>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
         );
       })}
     </nav>
@@ -210,48 +235,6 @@ function CartBanner() {
   return <CartBadge count={cart?.totalQuantity ?? 0} />;
 }
 
-const FALLBACK_HEADER_MENU = {
-  id: 'gid://shopify/Menu/199655587896',
-  items: [
-    {
-      id: 'gid://shopify/MenuItem/461609500728',
-      resourceId: null,
-      tags: [],
-      title: 'Collections',
-      type: 'HTTP',
-      url: '/collections',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461609533496',
-      resourceId: null,
-      tags: [],
-      title: 'Blog',
-      type: 'HTTP',
-      url: '/blogs/journal',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461609566264',
-      resourceId: null,
-      tags: [],
-      title: 'Policies',
-      type: 'HTTP',
-      url: '/policies',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461609599032',
-      resourceId: 'gid://shopify/Page/92591030328',
-      tags: [],
-      title: 'About',
-      type: 'PAGE',
-      url: '/pages/about',
-      items: [],
-    },
-  ],
-};
-
 function activeLinkStyle({
   isActive,
   isPending,
@@ -266,6 +249,30 @@ function activeLinkStyle({
 }
 
 function withDebugBorders(baseClassName: string, debugClassName?: string) {
-  if (!DEBUG_MENU_BORDERS) return baseClassName;
+  if (!DEBUG_BORDERS) return baseClassName;
   return `${baseClassName} debug-menu-borders ${debugClassName ?? ''}`.trim();
+}
+
+function getMenuItemChildren(item: HeaderMenuItem): HeaderMenuItem[] {
+  const maybeChildren = (item as HeaderMenuItem & {items?: unknown}).items;
+  return Array.isArray(maybeChildren) ? (maybeChildren as HeaderMenuItem[]) : [];
+}
+
+function getMenuItemUrl({
+  itemUrl,
+  publicStoreDomain,
+  primaryDomainUrl,
+}: {
+  itemUrl: string;
+  publicStoreDomain: string;
+  primaryDomainUrl: string;
+}) {
+  if (
+    itemUrl.includes('myshopify.com') ||
+    itemUrl.includes(publicStoreDomain) ||
+    itemUrl.includes(primaryDomainUrl)
+  ) {
+    return new URL(itemUrl).pathname;
+  }
+  return itemUrl;
 }
