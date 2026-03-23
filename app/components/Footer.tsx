@@ -18,6 +18,35 @@ export function Footer({
       <Await resolve={footerPromise}>
         {(footer) => (
           <footer className="footer">
+            <div className="footer-content">
+              <section>
+                <h4>Shop By</h4>
+                <nav className="footer-column-links" aria-label="Shop by">
+                  <NavLink to="/collections">Headwear</NavLink>
+                  <NavLink to="/collections/all">Apparel</NavLink>
+                  <NavLink to="/collections/all">New Arrivals</NavLink>
+                  <NavLink to="/search">Search</NavLink>
+                </nav>
+              </section>
+              <section>
+                <h4>About</h4>
+                <nav className="footer-column-links" aria-label="About">
+                  <NavLink to="/pages/about">Our Story</NavLink>
+                  <NavLink to="/blogs/news">Blog</NavLink>
+                  <NavLink to="/account">Rewards Account</NavLink>
+                  <NavLink to="/policies">Policies</NavLink>
+                </nav>
+              </section>
+              <section>
+                <h4>Customer Service</h4>
+                <nav className="footer-column-links" aria-label="Customer service">
+                  <NavLink to="/policies/shipping-policy">Shipping</NavLink>
+                  <NavLink to="/policies/refund-policy">Returns</NavLink>
+                  <NavLink to="/policies/terms-of-service">Terms</NavLink>
+                  <NavLink to="/policies/privacy-policy">Privacy</NavLink>
+                </nav>
+              </section>
+            </div>
             {footer?.menu && header.shop.primaryDomain?.url && (
               <FooterMenu
                 menu={footer.menu}
@@ -25,6 +54,10 @@ export function Footer({
                 publicStoreDomain={publicStoreDomain}
               />
             )}
+            <p className="footer-copyright">
+              © {new Date().getFullYear()} {header.shop.name}. All rights
+              reserved.
+            </p>
           </footer>
         )}
       </Await>

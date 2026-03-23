@@ -61,11 +61,71 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 export default function Homepage() {
   const data = useLoaderData<typeof loader>();
   return (
-    <div className="home">
+    <div className="home storefront-home">
       {data.isShopLinked ? null : <MockShopNotice />}
+      <HeroSection />
+      <ShopByTeamSection />
+      <ShopByCategorySection />
       <FeaturedCollection collection={data.featuredCollection} />
       <RecommendedProducts products={data.recommendedProducts} />
     </div>
+  );
+}
+
+function HeroSection() {
+  return (
+    <section className="hero-section">
+      <div className="hero-content">
+        <p className="hero-kicker">Spring Collection</p>
+        <h1>Sports hats, apparel, and fan essentials.</h1>
+        <p>
+          Build a bold storefront experience with editorial sections and
+          category-first navigation.
+        </p>
+        <div className="hero-actions">
+          <Link to="/collections/all">Shop Collection</Link>
+          <Link to="/search">Find Your Team</Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ShopByTeamSection() {
+  const teams = ['MLB', 'NFL', 'NBA', 'NHL', 'NCAA', 'MLS', 'WNBA', 'NASCAR'];
+  return (
+    <section className="team-section" aria-labelledby="shop-by-team-heading">
+      <h2 id="shop-by-team-heading">Shop by Team</h2>
+      <div className="team-grid">
+        {teams.map((team) => (
+          <Link key={team} to="/collections/all" className="team-pill">
+            {team}
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ShopByCategorySection() {
+  const categories = [
+    {title: 'Headwear', desc: 'Clean up, trucker, snapback, and more'},
+    {title: 'Apparel', desc: 'Tees, hoodies, and game-day layers'},
+    {title: 'New Arrivals', desc: 'Latest drops and seasonal styles'},
+    {title: 'Best Sellers', desc: 'Top styles fans buy most'},
+  ];
+  return (
+    <section className="category-section" aria-labelledby="shop-by-heading">
+      <h2 id="shop-by-heading">Shop By</h2>
+      <div className="category-grid">
+        {categories.map((category) => (
+          <Link key={category.title} to="/collections/all" className="category-card">
+            <h3>{category.title}</h3>
+            <p>{category.desc}</p>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -77,21 +137,27 @@ function FeaturedCollection({
   if (!collection) return null;
   const image = collection?.image;
   return (
-    <Link
-      className="featured-collection"
-      to={`/collections/${collection.handle}`}
-    >
-      {image && (
-        <div className="featured-collection-image">
-          <Image
-            data={image}
-            sizes="100vw"
-            alt={image.altText || collection.title}
-          />
+    <section className="featured-section" aria-labelledby="featured-collection">
+      <h2 id="featured-collection">Featured Collection</h2>
+      <Link
+        className="featured-collection"
+        to={`/collections/${collection.handle}`}
+      >
+        {image && (
+          <div className="featured-collection-image">
+            <Image
+              data={image}
+              sizes="100vw"
+              alt={image.altText || collection.title}
+            />
+          </div>
+        )}
+        <div className="featured-collection-copy">
+          <h3>{collection.title}</h3>
+          <p>Explore the latest products from this featured collection.</p>
         </div>
-      )}
-      <h1>{collection.title}</h1>
-    </Link>
+      </Link>
+    </section>
   );
 }
 

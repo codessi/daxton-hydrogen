@@ -24,7 +24,7 @@ export type RootLoader = typeof loader;
  * This is important to avoid re-fetching root queries on sub-navigations
  */
 export const shouldRevalidate: ShouldRevalidateFunction = ({
-  formMethod,
+  formMethod,  
   currentUrl,
   nextUrl,
 }) => {
@@ -75,7 +75,7 @@ export async function loader(args: Route.LoaderArgs) {
 
   const {storefront, env} = args.context;
 
-  return {
+  return {    
     ...deferredData,
     ...criticalData,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
